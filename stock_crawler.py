@@ -22,7 +22,7 @@ def get_stock_data(stock_no: str, days: int = 30):
         try:
             r = requests.get(url, verify=False, timeout=10)
             json_data = r.json()
-            if json_data['stat'] != 'OK':
+            if json_data['stat'] != 'OK': 
                 continue
             for row in json_data['data']:
                 roc_date = row[0]
