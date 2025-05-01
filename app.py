@@ -11,8 +11,8 @@ import os
 app = Flask(__name__)
 
 # LINE 金鑰設定
-LINE_CHANNEL_ACCESS_TOKEN = 'bgKII5OJv1THMpiFkbojNMcr9x3w3Mof8ckYLilxhUwIvapdfkPbd6oC+wm7cE6EQuk32ZX8h1o932gDqXUSobnln7ng2BERDDe4LhpalFeNTh/wBhgw7ZdeSenGZchToEEtZFalP2kv3G+Kq4NZ+AdB04t89/1O/w1cDnyilFU='
-LINE_CHANNEL_SECRET = 'c4a582b957fcc31be13e094fc74d7c50'
+LINE_CHANNEL_ACCESS_TOKEN = '+WI3XRv9qqjsZ01k3ZAzqGcPCWIDntzDJtGHNgQ5ixo57CReF67hfZIkw5KifwLlQuk32ZX8h1o932gDqXUSobnln7ng2BERDDe4LhpalFd9aIa0dL8JSF97y55aGxH24QQiDSxJXJyTSyC520F3KgdB04t89/1O/w1cDnyilFU='
+LINE_CHANNEL_SECRET = 'a3bce23c40fac99c653686f3944ce4c0'
 
 configuration = Configuration(access_token=LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
@@ -25,7 +25,8 @@ def index():
 def callback():
     signature = request.headers.get('X-Line-Signature', '')
     body = request.get_data(as_text=True)
-
+    print("Received signature:", signature)
+    print("Request body:", body)
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
