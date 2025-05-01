@@ -19,7 +19,7 @@ handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
 @app.route("/", methods=["GET"])
 def index():
-    return "The server is running!"
+    return "The server is running!" 
 
 @app.route("/callback", methods=['POST'])
 def callback():
