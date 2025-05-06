@@ -1,8 +1,14 @@
-# app.py：LINE Bot 主程式 (v3 SDK)
 from flask import Flask, request, abort
 from linebot.v3.webhook import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
-from linebot.v3.messaging import MessagingApi, Configuration, ApiClient, TextMessage, ImageMessage
+from linebot.v3.messaging import (
+    MessagingApi,
+    Configuration,
+    ApiClient,
+    TextMessage,
+    ImageMessage,
+)
+from linebot.v3.messaging.models import ReplyMessageRequest
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
 
 import stock_crawler as crawler
@@ -30,6 +36,7 @@ def callback():
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
+        print("❌ InvalidSignatureError: Channel Secret 錯誤或請求被修改")
         abort(400)
 
     return 'OK'
@@ -43,34 +50,27 @@ def handle_message(event):
 
         if msg.lower() == '幫助':
             reply = TextMessage(text="輸入股票代號查K線圖\n例如：2330\n輸入 2330 info 查股價\n輸入 2330 sma 查均線")
-            line_bot_api.reply_message(event.reply_token, [reply])
-            return
-
         elif msg.isdigit():
             path = crawler.generate_kline_image(msg)
             image_url = f"{crawler.IMAGE_HOST_URL}/{path}"
             reply = ImageMessage(original_content_url=image_url, preview_image_url=image_url)
-            line_bot_api.reply_message(event.reply_token, [reply])
-            return
-
         elif 'info' in msg:
             stock_id = msg.split()[0]
             info = crawler.get_stock_info(stock_id)
             reply = TextMessage(text=info)
-            line_bot_api.reply_message(event.reply_token, [reply])
-            return
-
         elif 'sma' in msg:
             stock_id = msg.split()[0]
             path = crawler.generate_kline_image(stock_id, show_sma=True)
             image_url = f"{crawler.IMAGE_HOST_URL}/{path}"
             reply = ImageMessage(original_content_url=image_url, preview_image_url=image_url)
-            line_bot_api.reply_message(event.reply_token, [reply])
-            return
-
         else:
             reply = TextMessage(text="請輸入股票代號或輸入『幫助』查看指令")
-            line_bot_api.reply_message(event.reply_token, [reply])
+
+        req = ReplyMessageRequest(
+            reply_token=event.reply_token,
+            messages=[reply]
+        )
+        line_bot_api.reply_message(req)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)

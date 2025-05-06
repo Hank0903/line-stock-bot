@@ -8,7 +8,8 @@ from utils import get_recent_trading_days, date_to_query_format
 
 # 設定圖片輸出資料夾與網址（你需要將這資料夾掛上 CDN 或 imgur 上傳）
 IMAGE_OUTPUT_FOLDER = 'static'
-IMAGE_HOST_URL = 'https://your-image-host.com/static'  # 更換為你的圖床網址
+IMAGE_HOST_URL = 'https://line-stock-bot-iwcn.onrender.com/static'
+  # 更換為你的圖床網址
 
 # 確保資料夾存在
 os.makedirs(IMAGE_OUTPUT_FOLDER, exist_ok=True)
