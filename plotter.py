@@ -6,7 +6,7 @@ def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str, show_sma=False):
     df.set_index('日期', inplace=True)
 
     df.rename(columns={
-        '開盤價': 'Open',
+        '開盤價': 'Open', 
         '最高價': 'High',
         '最低價': 'Low',
         '收盤價': 'Close',
