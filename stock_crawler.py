@@ -61,6 +61,24 @@ def generate_kline_image(stock_no: str, days: int = 30, show_sma=False):
     plot_kline(df, stock_no, filepath, show_sma)
     return filename
 
+def generate_kline_image_by_date(stock_no: str, start_date: str, end_date: str, show_sma=False):
+    df = get_stock_data(stock_no, 30)  # 先取得最近 30 天的資料以便查詢
+    if df.empty:
+        raise Exception("無法取得資料")
+
+    # 篩選日期範圍
+    df['日期'] = pd.to_datetime(df['日期'])
+    mask = (df['日期'] >= start_date) & (df['日期'] <= end_date)
+    df = df.loc[mask]
+
+    if df.empty:
+        raise Exception("無法取得該日期範圍內的資料")
+
+    filename = f"{stock_no}_kline_{start_date}_{end_date}.png"
+    filepath = os.path.join(IMAGE_OUTPUT_FOLDER, filename)
+    plot_kline(df, stock_no, filepath, show_sma)
+    return filename
+
 def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str, show_sma=False):
     df = df.copy()
     df.set_index('日期', inplace=True)
