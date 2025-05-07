@@ -60,7 +60,9 @@ def handle_message(event):
 
         msgParts = msg.split()
         if len(msgParts) == 3 and re.match(r'^\d{4}-\d{2}-\d{2}$', msgParts[1]) and re.match(r'^\d{4}-\d{2}-\d{2}$', msgParts[2]):
-            stock_id = msgParts[0], startDate = msgParts[1], endDate = msgParts[2]
+            stock_id = msgParts[0]
+            startDate = msgParts[1]
+            endDate = msgParts[2]
             path = crawler.generate_kline_image_by_date(stock_id, startDate, endDate)
             imaage_url = f"{crawler.IMAGE_HOST_URL}/{path}"
             reply = ImageMessage(original_content_url=image_url, preview_image_url=image_url)
