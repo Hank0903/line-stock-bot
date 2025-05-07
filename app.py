@@ -59,7 +59,7 @@ def handle_message(event):
         line_bot_api = MessagingApi(api_client)
 
         msgParts = msg.split()
-        if len(msgParts) == 3 and re.match(r'^\d{4}-\d{2}-\d{2}$', parts[1]) and re.match(r'^\d{4}-\d{2}-\d{2}$', parts[2]):
+        if len(msgParts) == 3 and re.match(r'^\d{4}-\d{2}-\d{2}$', msgParts[1]) and re.match(r'^\d{4}-\d{2}-\d{2}$', msgParts[2]):
             stock_id = msgParts[0], startDate = msgParts[1], endDate = msgParts[2]
             path = crawler.generate_kline_image(stock_id, startDate, endDate)
             imaage_url = f"{crawler.IMAGE_HOST_URL}/{path}"
