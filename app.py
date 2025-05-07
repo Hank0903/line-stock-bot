@@ -63,8 +63,9 @@ def handle_message(event):
             stock_id = msgParts[0]
             startDate = msgParts[1]
             endDate = msgParts[2]
+            # stock_id, startDate, endDate = msgParts
             path = crawler.generate_kline_image_by_date(stock_id, startDate, endDate)
-            imaage_url = f"{crawler.IMAGE_HOST_URL}/{path}"
+            image_url = f"{crawler.IMAGE_HOST_URL}/{path}"
             reply = ImageMessage(original_content_url=image_url, preview_image_url=image_url)
         elif msg.lower() == '幫助':
             reply = TextMessage(text="輸入股票代號查K線圖\n例如：2330\n輸入 2330 info 查股價\n輸入 2330 sma 查均線\n"
