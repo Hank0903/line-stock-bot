@@ -1,12 +1,19 @@
 import mplfinance as mpf
 import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib import font_manager
 
 def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str, show_sma=False):
+    # 設定中文字體（Render 環境請確保字體存在於該路徑）
+    font_path = 'static/fonts/NotoSansTC-Regular.ttf'  # 相對專案目錄的路徑
+    prop = font_manager.FontProperties(fname=font_path)
+    plt.rcParams['font.family'] = prop.get_name()
+
     df = df.copy()
     df.set_index('日期', inplace=True)
 
     df.rename(columns={
-        '開盤價': 'Open', 
+        '開盤價': 'Open',
         '最高價': 'High',
         '最低價': 'Low',
         '收盤價': 'Close',
