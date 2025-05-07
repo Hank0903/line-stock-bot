@@ -15,7 +15,7 @@ IMAGE_HOST_URL = 'https://line-stock-bot-iwcn.onrender.com/static'
 os.makedirs(IMAGE_OUTPUT_FOLDER, exist_ok=True)
 
 # 設定中文字體
-font_path = '/usr/share/fonts/truetype/msttcorefonts/Arial.ttf'  # 可以更換為微軟正黑體或其他字型
+font_path = 'static/fonts/NotoSansTC-Regular.ttf'  # 可以更換為微軟正黑體或其他字型
 prop = fm.FontProperties(fname=font_path)
 
 def get_stock_data(stock_no: str, days: int = 30):
