@@ -62,7 +62,7 @@ def generate_kline_image(stock_no: str, days: int = 30, show_sma=False):
     return filename
 
 def generate_kline_image_by_date(stock_no: str, start_date: str, end_date: str, show_sma=False):
-    df = get_stock_data(stock_no, 30)  # 先取得最近 30 天的資料以便查詢
+    df = get_stock_data(stock_no, 180)  # 先取得最近 30 天的資料以便查詢
     if df.empty:
         raise Exception("無法取得資料")
 
