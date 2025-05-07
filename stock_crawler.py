@@ -1,3 +1,4 @@
+import re
 import requests
 import datetime
 import os
@@ -7,19 +8,42 @@ import matplotlib.font_manager as fm
 import mplfinance as mpf
 from utils import get_recent_trading_days, date_to_query_format
 
-# 設定圖片輸出資料夾與網址（你需要將這資料夾掛上 CDN 或 imgur 上傳）
+# 設定圖片輸出資料夾與網址
 IMAGE_OUTPUT_FOLDER = 'static'
 IMAGE_HOST_URL = 'https://line-stock-bot-iwcn.onrender.com/static'
 
-# 確保資料夾存在
 os.makedirs(IMAGE_OUTPUT_FOLDER, exist_ok=True)
 
 # 設定中文字體
-font_path = 'static/fonts/NotoSansTC-Regular.ttf'  # 可以更換為微軟正黑體或其他字型
+font_path = 'static/fonts/NotoSansTC-Regular.ttf'
 prop = fm.FontProperties(fname=font_path)
+
+# 取得區間內所有交易日
+def get_trading_days_between(start_date: str, end_date: str):
+    start = datetime.datetime.strptime(start_date, '%Y-%m-%d')
+    end = datetime.datetime.strptime(end_date, '%Y-%m-%d')
+    days = []
+    while start <= end:
+        if start.weekday() < 5:  # 排除週末
+            days.append(start)
+        start += datetime.timedelta(days=1)
+    return days
+
+# 抓取股價資料
 
 def get_stock_data(stock_no: str, days: int = 30):
     dates = get_recent_trading_days(days)
+    return fetch_stock_data(stock_no, dates)
+
+# 區間抓資料
+
+def get_stock_data_by_date(stock_no: str, start: str, end: str):
+    dates = get_trading_days_between(start, end)
+    return fetch_stock_data(stock_no, dates)
+
+# 共用資料抓取邏輯
+
+def fetch_stock_data(stock_no: str, dates):
     data = []
     for date in dates:
         date_param = date_to_query_format(date)
@@ -27,7 +51,7 @@ def get_stock_data(stock_no: str, days: int = 30):
         try:
             r = requests.get(url, verify=False, timeout=10)
             json_data = r.json()
-            if json_data['stat'] != 'OK':  
+            if json_data['stat'] != 'OK':
                 continue
             for row in json_data['data']:
                 roc_date = row[0]
@@ -51,33 +75,27 @@ def get_stock_data(stock_no: str, days: int = 30):
     df = df.sort_values("日期")
     return df
 
+# 產生 K 線圖（固定天數）
 def generate_kline_image(stock_no: str, days: int = 30, show_sma=False):
     df = get_stock_data(stock_no, days)
     if df.empty:
         raise Exception("無法取得資料")
-
     filename = f"{stock_no}_kline.png"
     filepath = os.path.join(IMAGE_OUTPUT_FOLDER, filename)
     plot_kline(df, stock_no, filepath, show_sma)
     return filename
 
-def generate_kline_image_by_date(stock_no: str, start_date: str, end_date: str, show_sma=False):
-    df = get_stock_data(stock_no, 180)  # 先取得最近 30 天的資料以便查詢
+# 產生 K 線圖（日期範圍）
+def generate_kline_image_by_date(stock_no: str, start: str, end: str, show_sma=False):
+    df = get_stock_data_by_date(stock_no, start, end)
     if df.empty:
         raise Exception("無法取得資料")
-
-    # 篩選日期範圍
-    df['日期'] = pd.to_datetime(df['日期'])
-    mask = (df['日期'] >= start_date) & (df['日期'] <= end_date)
-    df = df.loc[mask]
-
-    if df.empty:
-        raise Exception("無法取得該日期範圍內的資料")
-
-    filename = f"{stock_no}_kline_{start_date}_{end_date}.png"
+    filename = f"{stock_no}_{start}_to_{end}.png"
     filepath = os.path.join(IMAGE_OUTPUT_FOLDER, filename)
     plot_kline(df, stock_no, filepath, show_sma)
     return filename
+
+# 繪製K線圖
 
 def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str, show_sma=False):
     df = df.copy()
@@ -94,17 +112,18 @@ def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str, show_sma=False):
     mc = mpf.make_marketcolors(up='red', down='green', edge='inherit', wick='inherit', volume='inherit')
     s = mpf.make_mpf_style(base_mpf_style='charles', marketcolors=mc)
 
-    # 繪製K線圖
     mpf.plot(
         df,
         type='candle',
         mav=(10, 30) if show_sma else (),
         volume=True,
-        title=f"{stock_no} K 線圖 (近 {len(df)} 日)",
+        title=f"{stock_no} K 線圖 (共 {len(df)} 日)",
         style=s,
-        savefig=filepath,
-       
+        savefig=dict(fname=filepath, dpi=100, bbox_inches='tight'),
+        fontproperties=prop
     )
+
+# 查詢即時資訊
 
 def get_stock_info(stock_no: str):
     url = f"https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date=20240401&stockNo={stock_no}"
