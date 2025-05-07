@@ -83,7 +83,7 @@ def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str, show_sma=False):
         title=f"{stock_no} K 線圖 (近 {len(df)} 日)",
         style=s,
         savefig=filepath,
-        fontproperties=prop  # 使用指定的字體
+       
     )
 
 def get_stock_info(stock_no: str):
