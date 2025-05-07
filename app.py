@@ -58,9 +58,15 @@ def handle_message(event):
     with ApiClient(configuration) as api_client:
         line_bot_api = MessagingApi(api_client)
 
-        if msg.lower() == '幫助':
+        msgParts = msg.split()
+        if len(msgParts) == 3 and re.match(r'^\d{4}-\d{2}-\d{2}$', parts[1]) and re.match(r'^\d{4}-\d{2}-\d{2}$', parts[2]):
+            stock_id = msgParts[0], startDate = msgParts[1], endDate = msgParts[2]
+            path = crawler.generate_kline_image(stock_id, startDate, endDate)
+            imaage_url = f"{crawler.IMAGE_HOST_URL}/{path}"
+            reply = ImageMessage(original_content_url=image_url, preview_image_url=image_url)
+        elif msg.lower() == '幫助':
             reply = TextMessage(text="輸入股票代號查K線圖\n例如：2330\n輸入 2330 info 查股價\n輸入 2330 sma 查均線\n"
-                                     "輸入 2330 60 查近 60 天資料\n輸入 2330 sma 90 查 90 天均線")
+                                     "輸入 2330 60 查近 60 天資料\n輸入 2330 sma 90 查 90 天均線\n輸入 2330 2024-01-01 2024-04-01 查特定區間")
         elif stock_id and stock_id.isdigit():
             try:
                 days = int(days) if days else 30  # 預設 30 天
