@@ -19,7 +19,7 @@ font_path = 'static/fonts/NotoSansTC-Regular.ttf'
 prop = fm.FontProperties(fname=font_path)
 
 # 取得區間內所有交易日
-def get_trading_days_between(start_date: str, end_date: str):
+def get_trading_days_between(start_date: str, end_date: str)->list[datetime.datetime]:
     start = datetime.datetime.strptime(start_date, '%Y-%m-%d')
     end = datetime.datetime.strptime(end_date, '%Y-%m-%d')
     days = []
@@ -136,3 +136,4 @@ def get_stock_info(stock_no: str):
                 f"最低：{last[5]}\n收盤：{last[6]}\n成交量：{last[1]}")
     except:
         return "取得資料失敗"
+
