@@ -14,7 +14,7 @@ from linebot.v3.webhooks import MessageEvent, TextMessageContent
 import stock_crawler as crawler
 import os
 import re
-
+  
 app = Flask(__name__)
 
 # LINE 金鑰設定
