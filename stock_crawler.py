@@ -108,6 +108,8 @@ def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str, show_sma=False):
         '收盤價': 'Close',
         '成交量': 'Volume'
     }, inplace=True)
+    
+    
 
     mc = mpf.make_marketcolors(up='red', down='green', edge='inherit', wick='inherit', volume='inherit')
     s = mpf.make_mpf_style(base_mpf_style='charles', marketcolors=mc)
