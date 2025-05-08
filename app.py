@@ -16,7 +16,7 @@ import os
 import re
   
 app = Flask(__name__)
-
+#test
 # LINE 金鑰設定
 LINE_CHANNEL_ACCESS_TOKEN = '+WI3XRv9qqjsZ01k3ZAzqGcPCWIDntzDJtGHNgQ5ixo57CReF67hfZIkw5KifwLlQuk32ZX8h1o932gDqXUSobnln7ng2BERDDe4LhpalFd9aIa0dL8JSF97y55aGxH24QQiDSxJXJyTSyC520F3KgdB04t89/1O/w1cDnyilFU='
 LINE_CHANNEL_SECRET = 'a3bce23c40fac99c653686f3944ce4c0'
