@@ -11,7 +11,7 @@ def get_recent_trading_days(n=30):
         delta += 1
     return list(reversed(result))
 
-def date_to_query_format(date_str):
+def date_to_query_format(date_obj):
     # 將 '20250428' 轉換成 '20250401'（月初）
     #return date_str[:6] + '01'
     return date_obj.strftime('%Y%m') + '01'
