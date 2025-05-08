@@ -8,7 +8,7 @@ def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str, show_sma=False):
     font_path = 'static/fonts/NotoSansTC-Regular.ttf'  # 相對專案目錄的路徑
     prop = font_manager.FontProperties(fname=font_path)
     plt.rcParams['font.family'] = prop.get_name()
-
+  
     df = df.copy()
     df.set_index('日期', inplace=True)
 
