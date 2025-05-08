@@ -120,6 +120,9 @@ def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str, show_sma=False):
         title=f"{stock_no} K 線圖 (共 {len(df)} 日)",
         style=s,
         savefig=dict(fname=filepath, dpi=100, bbox_inches='tight'),
+        datetime_format='%b %d',
+        xrotation=15,
+        tight_layout=True
     )
 
 # 查詢即時資訊
