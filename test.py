@@ -1,4 +1,3 @@
-
 import stock_crawler as crawler
 import os
 import re
