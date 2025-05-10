@@ -33,6 +33,7 @@ def get_trading_days_between(start_date: str, end_date: str)->list[datetime.date
 
 def get_stock_data(stock_no: str, days: int = 30):
     dates = get_recent_trading_days(days)
+    print(f'dates: {len(dates)}')
     return fetch_stock_data(stock_no, dates)
 
 # 區間抓資料

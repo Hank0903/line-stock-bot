@@ -89,6 +89,7 @@ def handle_message(event):
                         info = crawler.get_stock_info(stock_id)
                         reply = TextMessage(text=info)
                     else:
+                        #sma defualt is false
                         path = crawler.generate_kline_image(stock_id, days, show_sma=(command == 'sma'))
                         image_url = f"{crawler.IMAGE_HOST_URL}/{path}"
                         reply = ImageMessage(original_content_url=image_url, preview_image_url=image_url)
