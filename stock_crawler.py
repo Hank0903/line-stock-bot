@@ -45,6 +45,8 @@ def get_stock_data_by_date(stock_no: str, start: str, end: str):
 
 def fetch_stock_data(stock_no: str, dates):
     data = []
+    print(f'days: {len(dates)}')
+
     for date in dates:
         date_param = date_to_query_format(date)
         url = f"https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date={date_param}&stockNo={stock_no}"
@@ -71,6 +73,10 @@ def fetch_stock_data(stock_no: str, dates):
         except Exception as e:
             print(f"錯誤: {e}")
             continue
+    
+    # now we have proof of repetition
+    print(f'天數 : {len(data)}')    
+
     df = pd.DataFrame(data)
     df = df.sort_values("日期")
     return df
@@ -80,7 +86,7 @@ def generate_kline_image(stock_no: str, days: int = 30, show_sma=False):
     df = get_stock_data(stock_no, days)
     if df.empty:
         raise Exception("無法取得資料")
-    filename = f"{stock_no}_kline.png"
+    filename = f"{stock_no}_kline.jpg"
     filepath = os.path.join(IMAGE_OUTPUT_FOLDER, filename)
     plot_kline(df, stock_no, filepath, show_sma)
     return filename
@@ -90,7 +96,7 @@ def generate_kline_image_by_date(stock_no: str, start: str, end: str, show_sma=F
     df = get_stock_data_by_date(stock_no, start, end)
     if df.empty:
         raise Exception("無法取得資料")
-    filename = f"{stock_no}_{start}_to_{end}.png"
+    filename = f"{stock_no}_{start}_to_{end}.jpg"
     filepath = os.path.join(IMAGE_OUTPUT_FOLDER, filename)
     plot_kline(df, stock_no, filepath, show_sma)
     return filename
@@ -98,6 +104,7 @@ def generate_kline_image_by_date(stock_no: str, start: str, end: str, show_sma=F
 # 繪製K線圖
 
 def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str, show_sma=False):
+    #'''
     df = df.copy()
     df.set_index('日期', inplace=True)
 
@@ -108,9 +115,22 @@ def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str, show_sma=False):
         '收盤價': 'Close',
         '成交量': 'Volume'
     }, inplace=True)
-    
-    
+    #'''
 
+    '''
+    sample
+    ix = pd.DatetimeIndex(['2021-10-11','2021-10-12','2021-10-13','2021-10-14','2021-10-15'])
+    df = pd.DataFrame(dict(  Open=[131.4, 131.9, 132.0, 130.9, 131.6],
+                         High=[133.2, 132.7, 133.2, 132.7, 131.8],
+                          Low=[131.3, 131.3, 131.5, 130.6, 130.7],
+                        Close=[132.1, 131.4, 131.8, 132.1, 131.0],
+                       Volume=[19591, 21467, 20406, 22611, 22001]),
+                       index = ix
+                  )
+    '''
+
+    # input source has repetition
+    df = df[::5]
     mc = mpf.make_marketcolors(up='red', down='green', edge='inherit', wick='inherit', volume='inherit')
     s = mpf.make_mpf_style(base_mpf_style='charles', marketcolors=mc)
 
@@ -119,7 +139,8 @@ def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str, show_sma=False):
         type='candle',
         mav=(10, 30) if show_sma else (),
         volume=True,
-        title=f"{stock_no} K 線圖 (共 {len(df)} 日)",
+        #title=f"{stock_no} K 線圖 (共 {len(df)} 日)",
+        title=f"{stock_no} K line graph (Total {len(df)} days)",
         style=s,
         savefig=dict(fname=filepath, dpi=100, bbox_inches='tight'),
         datetime_format='%b %d',
