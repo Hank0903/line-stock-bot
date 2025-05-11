@@ -50,6 +50,7 @@ def fetch_stock_data(stock_no: str, dates):
 
     for date in dates:
         date_param = date_to_query_format(date)
+        print(f'dateparam: {date_param}')
         url = f"https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date={date_param}&stockNo={stock_no}"
         try:
             r = requests.get(url, verify=False, timeout=10)
@@ -85,6 +86,7 @@ def fetch_stock_data(stock_no: str, dates):
 # 產生 K 線圖（固定天數）
 def generate_kline_image(stock_no: str, days: int = 30, show_sma=False):
     df = get_stock_data(stock_no, days)
+    print(f'days inside kline{df}')
     if df.empty:
         raise Exception("無法取得資料")
     filename = f"{stock_no}_kline.jpg"

@@ -27,6 +27,6 @@ if len(msg_parts) == 3 and re.match(r'^\d{4}-\d{2}-\d{2}$', msg_parts[1]) and re
 
 
 #sma defualt is false
-path = crawler.generate_kline_image(2330, 10, show_sma=False)
+path = crawler.generate_kline_image(2330, 5, show_sma=False)
 image_url = f"{crawler.IMAGE_HOST_URL}/{path}"
 reply = ImageMessage(original_content_url=image_url, preview_image_url=image_url)

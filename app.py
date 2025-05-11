@@ -80,9 +80,12 @@ def handle_message(event):
             # ✅ 3. 股票代號 + 可選天數 + 可選指令
             else:
                 # 解析：股票代號、天數、指令（info 或 sma）
-                match = re.match(r'(\d{4,5})(?:\s+(\d+))?(?:\s+(info|sma))?', msg.lower())
+                #match = re.match(r'(\d{4,5})(?:\s+(\d+))?(?:\s+(info|sma))?', msg.lower())
+                match = re.match(r'(\d{4,5})(?:\s+(info|sma))?(?:\s+(\d+))?', msg.lower())
+
                 if match:
                     stock_id, days, command = match.groups()
+                    print(f'stockid:{stock_id},days:{days},command:{command}')
                     days = int(days) if days else 30
 
                     if command == 'info':
@@ -94,9 +97,11 @@ def handle_message(event):
                         image_url = f"{crawler.IMAGE_HOST_URL}/{path}"
                         reply = ImageMessage(original_content_url=image_url, preview_image_url=image_url)
                 else:
+                    print('wrong command')
                     reply = TextMessage(text="❗請輸入有效指令，輸入『幫助』查看用法")
 
         except Exception as e:
+            print('error')
             reply = TextMessage(text=f"❌ 發生錯誤：{e}")
 
         # 發送回覆
