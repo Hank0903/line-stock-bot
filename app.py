@@ -14,40 +14,34 @@ from linebot.v3.webhooks import MessageEvent, TextMessageContent
 import stock_crawler as crawler
 import os
 import re
-  
+
 app = Flask(__name__)
-#test
+
 # LINE 金鑰設定
-LINE_CHANNEL_ACCESS_TOKEN = '+WI3XRv9qqjsZ01k3ZAzqGcPCWIDntzDJtGHNgQ5ixo57CReF67hfZIkw5KifwLlQuk32ZX8h1o932gDqXUSobnln7ng2BERDDe4LhpalFd9aIa0dL8JSF97y55aGxH24QQiDSxJXJyTSyC520F3KgdB04t89/1O/w1cDnyilFU='
-LINE_CHANNEL_SECRET = 'a3bce23c40fac99c653686f3944ce4c0'
+LINE_CHANNEL_ACCESS_TOKEN = 'YOUR_ACCESS_TOKEN'
+LINE_CHANNEL_SECRET = 'YOUR_SECRET'
 
-configuration = Configuration(access_token=LINE_CHANNEL_ACCESS_TOKEN)
-handler = WebhookHandler(LINE_CHANNEL_SECRET)
+configuration = Configuration(access_token='+WI3XRv9qqjsZ01k3ZAzqGcPCWIDntzDJtGHNgQ5ixo57CReF67hfZIkw5KifwLlQuk32ZX8h1o932gDqXUSobnln7ng2BERDDe4LhpalFd9aIa0dL8JSF97y55aGxH24QQiDSxJXJyTSyC520F3KgdB04t89/1O/w1cDnyilFU=')
+handler = WebhookHandler('a3bce23c40fac99c653686f3944ce4c0')
 
-# ✅ 靜態檔案路由（用於讓 LINE 可以讀到圖片）
 @app.route('/static/<path:filename>')
 def serve_static(filename):
     return send_from_directory(crawler.IMAGE_OUTPUT_FOLDER, filename, mimetype='image/png')
 
 @app.route("/", methods=["GET"])
 def index():
-    return "The server is running!" 
+    return "The server is running!"
 
 @app.route("/callback", methods=['POST'])
 def callback():
     signature = request.headers.get('X-Line-Signature', '')
     body = request.get_data(as_text=True)
-    print("Received signature:", signature)
-    print("Request body:", body)
+
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
-        print("❌ InvalidSignatureError: Channel Secret 錯誤或請求被修改")
         abort(400)
-
     return 'OK'
-
-@handler.add(MessageEvent, message=TextMessageContent)
 
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
@@ -58,14 +52,12 @@ def handle_message(event):
         line_bot_api = MessagingApi(api_client)
 
         try:
-            # ✅ 1. 指定日期範圍：2330 2024-01-01 2024-04-01
-            if len(msg_parts) == 3 and re.match(r'^\d{4}-\d{2}-\d{2}$', msg_parts[1]) and re.match(r'^\d{4}-\d{2}-\d{2}$', msg_parts[2]):
+            if len(msg_parts) == 3 and re.match(r'\d{4}-\d{2}-\d{2}', msg_parts[1]) and re.match(r'\d{4}-\d{2}-\d{2}', msg_parts[2]):
                 stock_id, start_date, end_date = msg_parts
                 path = crawler.generate_kline_image_by_date(stock_id, start_date, end_date)
-                image_url = f"{crawler.IMAGE_HOST_URL}/{path}"
-                reply = ImageMessage(original_content_url=image_url, preview_image_url=image_url)
+                url = f"{crawler.IMAGE_HOST_URL}/{path}"
+                reply = ImageMessage(original_content_url=url, preview_image_url=url)
 
-            # ✅ 2. 幫助訊息
             elif msg.lower() in ['幫助', 'help']:
                 reply = TextMessage(text=(
                     "📈 股票查詢指令：\n"
@@ -77,34 +69,38 @@ def handle_message(event):
                     "▶︎ 2330 2024-01-01 2024-04-01 → 查指定區間K線圖"
                 ))
 
-            # ✅ 3. 股票代號 + 可選天數 + 可選指令
             else:
-                # 解析：股票代號、天數、指令（info 或 sma）
-                match = re.match(r'(\d{4,5})(?:\s+(\d+))?(?:\s+(info|sma))?', msg.lower())
+                match = re.match(r'(\d{4,5})(?:\s+(sma|info|\d+))?(?:\s+(\d+))?', msg.lower())
                 if match:
-                    stock_id, days, command = match.groups()
-                    days = int(days) if days else 30
+                    stock_id, arg1, arg2 = match.groups()
+                    command = None
+                    days = 30
+
+                    if arg1 == 'info':
+                        command = 'info'
+                    elif arg1 == 'sma':
+                        command = 'sma'
+                        days = int(arg2) if arg2 else 30
+                    elif arg1 and arg1.isdigit():
+                        days = int(arg1)
 
                     if command == 'info':
-                        info = crawler.get_stock_info(stock_id)
-                        reply = TextMessage(text=info)
+                        text = crawler.get_stock_info(stock_id)
+                        reply = TextMessage(text=text)
                     else:
                         path = crawler.generate_kline_image(stock_id, days, show_sma=(command == 'sma'))
-                        image_url = f"{crawler.IMAGE_HOST_URL}/{path}"
-                        reply = ImageMessage(original_content_url=image_url, preview_image_url=image_url)
+                        url = f"{crawler.IMAGE_HOST_URL}/{path}"
+                        reply = ImageMessage(original_content_url=url, preview_image_url=url)
                 else:
                     reply = TextMessage(text="❗請輸入有效指令，輸入『幫助』查看用法")
 
         except Exception as e:
-            reply = TextMessage(text=f"❌ 發生錯誤：{e}")
+            reply = TextMessage(text=f"❌ 發生錯誤：{str(e)}")
 
-        # 發送回覆
-        req = ReplyMessageRequest(
+        line_bot_api.reply_message(ReplyMessageRequest(
             reply_token=event.reply_token,
             messages=[reply]
-        )
-        line_bot_api.reply_message(req)
-
+        ))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)

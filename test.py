@@ -1,7 +1,7 @@
 import stock_crawler as crawler
 import os
 import re
-msg_parts = "2330 2024-01-01 2024-04-01".split(r" ")
+msg_parts = "2330 2024-04-01 2024-04-05".split(r" ")
 if len(msg_parts) == 3 and re.match(r'^\d{4}-\d{2}-\d{2}$', msg_parts[1]) and re.match(r'^\d{4}-\d{2}-\d{2}$', msg_parts[2]):
         stock_id, start_date, end_date = msg_parts
         path = crawler.generate_kline_image_by_date(stock_id, start_date, end_date)
