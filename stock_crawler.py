@@ -45,9 +45,23 @@ def get_stock_data_by_date(stock_no: str, start: str, end: str):
 
 def fetch_stock_data(stock_no: str, dates):
     data = []
+    seen_months = set()
+
     for date in dates:
-        date_param = date_to_query_format(date)
-        url = f"https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date={date_param}&stockNo={stock_no}"
+        if isinstance(date, str):  # 如果是字串（來自 get_recent_trading_days）
+            date_obj = datetime.datetime.strptime(date, "%Y%m%d")
+        else:
+            date_obj = date
+
+        # 轉換成該月起始日字串，例如 20250401
+        month_key = date_obj.strftime("%Y%m") + "01"
+
+        if month_key in seen_months:
+            continue  # 如果已處理過這個月，就跳過
+
+        seen_months.add(month_key)
+
+        url = f"https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date={month_key}&stockNo={stock_no}"
         try:
             r = requests.get(url, verify=False, timeout=10)
             json_data = r.json()
@@ -71,9 +85,11 @@ def fetch_stock_data(stock_no: str, dates):
         except Exception as e:
             print(f"錯誤: {e}")
             continue
+
     df = pd.DataFrame(data)
     df = df.sort_values("日期")
     return df
+
 
 # 產生 K 線圖（固定天數）
 def generate_kline_image(stock_no: str, days: int = 30, show_sma=False):
