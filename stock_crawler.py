@@ -90,7 +90,7 @@ def generate_kline_image(stock_no: str, days: int = 30, show_sma=False):
     df = get_stock_data(stock_no, days)
     if df.empty:
         raise Exception("❌ 無法取得資料")
-    filename = f"{stock_no}_kline.png"
+    filename = f"{stock_no}_kline.jpg"
     filepath = os.path.join(IMAGE_OUTPUT_FOLDER, filename)
     plot_kline(df, stock_no, filepath, show_sma)
     return filename
@@ -100,7 +100,7 @@ def generate_kline_image_by_date(stock_no: str, start: str, end: str, show_sma=F
     df = get_stock_data_by_date(stock_no, start, end)
     if df.empty:
         raise Exception("❌ 無法取得資料")
-    filename = f"{stock_no}_{start}_to_{end}.png"
+    filename = f"{stock_no}_{start}_to_{end}.jpg"
     filepath = os.path.join(IMAGE_OUTPUT_FOLDER, filename)
     plot_kline(df, stock_no, filepath, show_sma)
     return filename
