@@ -28,7 +28,7 @@ def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str, show_sma=False):
         type='candle',
         mav=(10, 30) if show_sma else (),
         volume=True,
-        title=f"{stock_no} K 線圖（共 {len(df)} 天）",
+        title=f"{stock_no} Kline（ {len(df)} days）",
         style=s,
         savefig=dict(fname=filepath, dpi=100, bbox_inches='tight'),
         datetime_format='%Y-%m-%d',
