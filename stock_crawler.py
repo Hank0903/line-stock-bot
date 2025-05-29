@@ -38,34 +38,34 @@ def get_stock_data_by_date(stock_no: str, start: str, end: str):
     dates = get_trading_days_between(start, end)
     return fetch_stock_data(stock_no, dates)
 
-# ✅ 資料抓取主邏輯（附加 max_days 裁切功能）
 def fetch_stock_data(stock_no: str, dates, max_days=None):
+    # 確保 dates 是 datetime 物件列表
+    dates = [d if isinstance(d, datetime.datetime) else datetime.datetime.strptime(d, "%Y%m%d") for d in dates]
+    target_dates_set = set(d.date() for d in dates)
+
+    # 取得需要抓取的月份字串（例如 '202405'）
+    months_to_fetch = sorted(set(d.strftime('%Y%m') for d in dates))
     data = []
-    seen_months = set()
 
-    for date in dates:
-        date_obj = datetime.datetime.strptime(date, "%Y%m%d") if isinstance(date, str) else date
-        month_key = date_obj.strftime("%Y%m") + "01"
-
-        if month_key in seen_months:
-            continue
-        seen_months.add(month_key)
-
-        url = f"https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date={month_key}&stockNo={stock_no}"
+    for month_key in months_to_fetch:
+        url = f"https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date={month_key}01&stockNo={stock_no}"
         try:
             r = requests.get(url, verify=False, timeout=10)
             json_data = r.json()
             if json_data['stat'] != 'OK':
                 continue
             for row in json_data['data']:
+                # 民國年轉西元年
                 roc_date = row[0]
                 parts = roc_date.split('/')
                 if len(parts[0]) == 3:
                     parts[0] = str(int(parts[0]) + 1911)
                 date_fmt = '-'.join(parts)
-                parsed = datetime.datetime.strptime(date_fmt, '%Y-%m-%d')
+                parsed_date = datetime.datetime.strptime(date_fmt, '%Y-%m-%d')
+                if parsed_date.date() not in target_dates_set:
+                    continue
                 data.append({
-                    "日期": parsed,
+                    "日期": parsed_date,
                     "開盤價": float(row[3].replace(',', '')),
                     "最高價": float(row[4].replace(',', '')),
                     "最低價": float(row[5].replace(',', '')),
@@ -79,11 +79,11 @@ def fetch_stock_data(stock_no: str, dates, max_days=None):
     df = pd.DataFrame(data)
     df = df.sort_values("日期")
 
-    # ✅ 限制最大交易日數（如果有指定）
     if max_days is not None:
         df = df.tail(max_days)
 
     return df
+
 
 # ✅ 產生 K 線圖（依天數）
 def generate_kline_image(stock_no: str, days: int = 30, show_sma=False):
