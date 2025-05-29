@@ -40,8 +40,20 @@ def get_stock_data_by_date(stock_no: str, start: str, end: str):
 
 def fetch_stock_data(stock_no: str, dates, max_days=None):
     # 確保 dates 是 datetime 物件列表
-    dates = [d if isinstance(d, datetime.datetime) else datetime.datetime.strptime(d, "%Y%m%d") for d in dates]
+    def ensure_datetime(d):
+        if isinstance(d, datetime.datetime):
+            return d
+        elif isinstance(d, datetime.date):
+            return datetime.datetime.combine(d, datetime.time.min)
+        elif isinstance(d, str):
+            # 試著解析格式為 YYYYMMDD
+            return datetime.datetime.strptime(d, "%Y%m%d")
+        else:
+            raise ValueError(f"不支援的日期格式：{type(d)}")
+
+    dates = [ensure_datetime(d) for d in dates]
     target_dates_set = set(d.date() for d in dates)
+
 
     # 取得需要抓取的月份字串（例如 '202405'）
     months_to_fetch = sorted(set(d.strftime('%Y%m') for d in dates))
