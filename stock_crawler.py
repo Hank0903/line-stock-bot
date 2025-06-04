@@ -109,27 +109,7 @@ def generate_kline_image_by_date(stock_no: str, start: str, end: str):
     plot_kline(df, stock_no, filepath)
     return filename
 
-# ✅ K 線圖繪製
-def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str):
-    df = df.copy()
-    df.set_index('日期', inplace=True)
-    df.rename(columns={
-        '開盤價': 'Open',
-        '最高價': 'High',
-        '最低價': 'Low',
-        '收盤價': 'Close',
-        '成交量': 'Volume'
-    }, inplace=True)
-    mc = mpf.make_marketcolors(up='red', down='green', edge='inherit', wick='inherit', volume='inherit')
-    s = mpf.make_mpf_style(base_mpf_style='charles', marketcolors=mc)
-    mpf.plot(
-        df,
-        type='candle',
-        volume=True,
-        title=f"{stock_no} K 線圖 (共 {len(df)} 日)",
-        style=s,
-        savefig=filepath
-    )
+
 
 
 # 公開變數
