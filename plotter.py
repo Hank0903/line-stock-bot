@@ -4,16 +4,15 @@ import matplotlib.pyplot as plt
 from matplotlib import font_manager
 import os
 
+# ✅ 設定中文字體（Render 與本機皆通用）
+font_path = 'static/fonts/NotoSansTC-Regular.ttf'
+if os.path.exists(font_path):
+    prop = font_manager.FontProperties(fname=font_path)
+    plt.rcParams['font.family'] = prop.get_name()
+else:
+    print("⚠️ 找不到中文字體，請確認字體路徑正確！")
 
 def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str, show_sma=False):
-    # ✅ 設定中文字體，優先使用專案內的字體檔
-    font_path = 'static/fonts/NotoSansTC-Regular.ttf'
-    if os.path.exists(font_path):
-        prop = font_manager.FontProperties(fname=font_path)
-        plt.rcParams['font.family'] = prop.get_name()
-    else:
-        print("⚠️ 找不到中文字體，請確認 static/fonts/NotoSansTC-Regular.ttf 存在")
-
     df = df.copy()
     df.set_index('日期', inplace=True)
     df.rename(columns={
@@ -28,6 +27,7 @@ def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str, show_sma=False):
     mc = mpf.make_marketcolors(up='red', down='green', edge='black', wick='black', volume='blue')
     s = mpf.make_mpf_style(base_mpf_style='classic', marketcolors=mc)
 
+    # ✅ 圖表標題
     chart_title = f"{stock_no} K 線圖"
 
     # ✅ 自訂圖表
@@ -45,14 +45,12 @@ def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str, show_sma=False):
         tight_layout=True,
         figratio=(12, 6),
         figscale=2.0,
-        returnfig=True,
-        fontproperties=prop  # 套用中文字體
+        returnfig=True
     )
 
     # ✅ 加上來源註記
-    fig.text(0.9, 0.02, "資料來源：TWSE", fontsize=10, ha='right', fontproperties=prop)
+    fig.text(0.9, 0.02, "資料來源：TWSE", fontsize=10, ha='right')
 
     # ✅ 儲存與清理
     fig.savefig(filepath, dpi=100, bbox_inches='tight')
     plt.close(fig)
-    print(f"✅ K 線圖已儲存至 {filepath}")
