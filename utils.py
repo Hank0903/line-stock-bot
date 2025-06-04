@@ -1,7 +1,18 @@
 import datetime
 
+def get_trading_days_between(start_date: str, end_date: str):
+    """取得兩日期之間的所有交易日（排除週末）"""
+    start = datetime.datetime.strptime(start_date, '%Y-%m-%d')
+    end = datetime.datetime.strptime(end_date, '%Y-%m-%d')
+    days = []
+    while start <= end:
+        if start.weekday() < 5:  # 週一到週五
+            days.append(start)
+        start += datetime.timedelta(days=1)
+    return days
+
 def get_recent_trading_days(n=30):
-    """取得最近 n 個交易日（不含假日）"""
+    """回推 n 天的交易日"""
     today = datetime.date.today()
     result = []
     delta = 0
@@ -12,8 +23,8 @@ def get_recent_trading_days(n=30):
         delta += 1
     return list(reversed(result))
 
-def date_to_query_format(date_input):
-    """將日期轉換為 YYYYMM01 格式（當月第一天）"""
-    if isinstance(date_input, str):
-        date_input = datetime.datetime.strptime(date_input, '%Y%m%d')
-    return date_input.strftime('%Y%m') + '01'
+def date_to_query_format(date_obj):
+    """將 datetime 物件轉為 YYYYMMDD 格式，查詢用"""
+    if isinstance(date_obj, str):
+        date_obj = datetime.datetime.strptime(date_obj, "%Y-%m-%d")
+    return date_obj.strftime('%Y%m') + '01'

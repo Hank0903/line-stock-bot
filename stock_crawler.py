@@ -1,4 +1,3 @@
-import re
 import requests
 import datetime
 import os
@@ -6,78 +5,49 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 import mplfinance as mpf
-from utils import get_recent_trading_days, date_to_query_format
+from utils import get_recent_trading_days, get_trading_days_between, date_to_query_format
 
-# 圖片設定
+# 設定圖片輸出資料夾與網址（你需要將這資料夾掛上 CDN 或 imgur 上傳）
 IMAGE_OUTPUT_FOLDER = 'static'
 IMAGE_HOST_URL = 'https://line-stock-bot-iwcn.onrender.com/static'
+
+# 確保資料夾存在
 os.makedirs(IMAGE_OUTPUT_FOLDER, exist_ok=True)
 
-# 中文字體設定
+# 設定中文字體
 font_path = 'static/fonts/NotoSansTC-Regular.ttf'
 prop = fm.FontProperties(fname=font_path)
 
-# 🧠 日期工具
-def get_trading_days_between(start_date: str, end_date: str) -> list[datetime.datetime]:
-    start = datetime.datetime.strptime(start_date, '%Y-%m-%d')
-    end = datetime.datetime.strptime(end_date, '%Y-%m-%d')
-    days = []
-    while start <= end:
-        if start.weekday() < 5:  # 排除週末
-            days.append(start)
-        start += datetime.timedelta(days=1)
-    return days
-
-# ✅ 取得股票資料（指定天數）
+# ✅ 爬取日資料
 def get_stock_data(stock_no: str, days: int = 30):
     dates = get_recent_trading_days(days)
-    return fetch_stock_data(stock_no, dates, max_days=days)
+    return fetch_stock_data(stock_no, dates)
 
-# ✅ 取得股票資料（指定日期區間）
+# ✅ 爬取特定區間資料
 def get_stock_data_by_date(stock_no: str, start: str, end: str):
     dates = get_trading_days_between(start, end)
     return fetch_stock_data(stock_no, dates)
 
-def fetch_stock_data(stock_no: str, dates, max_days=None):
-    # 確保 dates 是 datetime 物件列表
-    def ensure_datetime(d):
-        if isinstance(d, datetime.datetime):
-            return d
-        elif isinstance(d, datetime.date):
-            return datetime.datetime.combine(d, datetime.time.min)
-        elif isinstance(d, str):
-            # 試著解析格式為 YYYYMMDD
-            return datetime.datetime.strptime(d, "%Y%m%d")
-        else:
-            raise ValueError(f"不支援的日期格式：{type(d)}")
-
-    dates = [ensure_datetime(d) for d in dates]
-    target_dates_set = set(d.date() for d in dates)
-
-
-    # 取得需要抓取的月份字串（例如 '202405'）
-    months_to_fetch = sorted(set(d.strftime('%Y%m') for d in dates))
+# ✅ 核心爬蟲邏輯
+def fetch_stock_data(stock_no: str, dates):
     data = []
-
-    for month_key in months_to_fetch:
-        url = f"https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date={month_key}01&stockNo={stock_no}"
+    for date in dates:
+        date_param = date_to_query_format(date)
+        url = f"https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date={date_param}&stockNo={stock_no}"
         try:
             r = requests.get(url, verify=False, timeout=10)
             json_data = r.json()
             if json_data['stat'] != 'OK':
                 continue
             for row in json_data['data']:
-                # 民國年轉西元年
                 roc_date = row[0]
                 parts = roc_date.split('/')
                 if len(parts[0]) == 3:
                     parts[0] = str(int(parts[0]) + 1911)
                 date_fmt = '-'.join(parts)
-                parsed_date = datetime.datetime.strptime(date_fmt, '%Y-%m-%d')
-                if parsed_date.date() not in target_dates_set:
-                    continue
+                parsed = datetime.datetime.strptime(date_fmt, '%Y-%m-%d')
                 data.append({
-                    "日期": parsed_date,
+                    "日期": parsed,
                     "開盤價": float(row[3].replace(',', '')),
                     "最高價": float(row[4].replace(',', '')),
                     "最低價": float(row[5].replace(',', '')),
@@ -85,67 +55,32 @@ def fetch_stock_data(stock_no: str, dates, max_days=None):
                     "成交量": float(row[1].replace(',', '')),
                 })
         except Exception as e:
-            print(f"❌ 錯誤：{e}")
+            print(f"錯誤: {e}")
             continue
-
     df = pd.DataFrame(data)
     df = df.sort_values("日期")
-
-    if max_days is not None:
-        df = df.tail(max_days)
-
     return df
 
+# ✅ 即時價格查詢
+def get_realtime_price(stock_no: str):
+    url = f"https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_{stock_no}.tw"
+    try:
+        r = requests.get(url, verify=False, timeout=10)
+        json_data = r.json()
+        if not json_data['msgArray']:
+            return "查無即時報價"
+        item = json_data['msgArray'][0]
+        return (f"📈 股票代號：{item['c']}\n"
+                f"📛 名稱：{item['n']}\n"
+                f"💰 最新成交價：{item['z']}\n"
+                f"📊 開盤：{item['o']}\n"
+                f"📈 最高：{item['h']}\n"
+                f"📉 最低：{item['l']}\n"
+                f"📦 成交量：{item['v']}")
+    except:
+        return "❌ 即時報價查詢失敗"
 
-# ✅ 產生 K 線圖（依天數）
-def generate_kline_image(stock_no: str, days: int = 30, show_sma=False):
-    df = get_stock_data(stock_no, days)
-    if df.empty:
-        raise Exception("❌ 無法取得資料")
-    filename = f"{stock_no}_kline.jpg"
-    filepath = os.path.join(IMAGE_OUTPUT_FOLDER, filename)
-    plot_kline(df, stock_no, filepath, show_sma)
-    return filename
-
-# ✅ 產生 K 線圖（依日期區間）
-def generate_kline_image_by_date(stock_no: str, start: str, end: str, show_sma=False):
-    df = get_stock_data_by_date(stock_no, start, end)
-    if df.empty:
-        raise Exception("❌ 無法取得資料")
-    filename = f"{stock_no}_{start}_to_{end}.jpg"
-    filepath = os.path.join(IMAGE_OUTPUT_FOLDER, filename)
-    plot_kline(df, stock_no, filepath, show_sma)
-    return filename
-
-# ✅ 繪圖邏輯
-def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str, show_sma=False):
-    df = df.copy()
-    df.set_index('日期', inplace=True)
-    df.rename(columns={
-        '開盤價': 'Open',
-        '最高價': 'High',
-        '最低價': 'Low',
-        '收盤價': 'Close',
-        '成交量': 'Volume'
-    }, inplace=True)
-
-    mc = mpf.make_marketcolors(up='red', down='green', edge='inherit', wick='inherit', volume='inherit')
-    s = mpf.make_mpf_style(base_mpf_style='charles', marketcolors=mc)
-
-    mpf.plot(
-        df,
-        type='candle',
-        mav=(10, 30) if show_sma else (),
-        volume=True,
-        title=f"{stock_no} K line ({len(df)} days)",
-        style=s,
-        savefig=dict(fname=filepath, dpi=100, bbox_inches='tight'),
-        datetime_format='%b %d',
-        xrotation=15,
-        tight_layout=True
-    )
-
-# ✅ 股價資訊簡訊
+# ✅ 股價摘要（來自某一日）
 def get_stock_info(stock_no: str):
     url = f"https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date=20240401&stockNo={stock_no}"
     try:
@@ -158,3 +93,55 @@ def get_stock_info(stock_no: str):
                 f"最低：{last[5]}\n收盤：{last[6]}\n成交量：{last[1]}")
     except:
         return "取得資料失敗"
+
+# ✅ K 線圖產生（依天數）
+def generate_kline_image(stock_no: str, days: int = 30, show_sma=False):
+    df = get_stock_data(stock_no, days)
+    if df.empty:
+        raise Exception("無法取得資料")
+    filename = f"{stock_no}_kline.png"
+    filepath = os.path.join(IMAGE_OUTPUT_FOLDER, filename)
+    plot_kline(df, stock_no, filepath)
+    return filename
+
+# ✅ K 線圖產生（指定區間）
+def generate_kline_image_by_date(stock_no: str, start: str, end: str, show_sma=False):
+    df = get_stock_data_by_date(stock_no, start, end)
+    if df.empty:
+        raise Exception("無法取得資料")
+    filename = f"{stock_no}_{start}_to_{end}.png"
+    filepath = os.path.join(IMAGE_OUTPUT_FOLDER, filename)
+    plot_kline(df, stock_no, filepath)
+    return filename
+
+# ✅ K 線圖繪製
+def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str):
+    df = df.copy()
+    df.set_index('日期', inplace=True)
+    df.rename(columns={
+        '開盤價': 'Open',
+        '最高價': 'High',
+        '最低價': 'Low',
+        '收盤價': 'Close',
+        '成交量': 'Volume'
+    }, inplace=True)
+    mc = mpf.make_marketcolors(up='red', down='green', edge='inherit', wick='inherit', volume='inherit')
+    s = mpf.make_mpf_style(base_mpf_style='charles', marketcolors=mc)
+    mpf.plot(
+        df,
+        type='candle',
+        volume=True,
+        title=f"{stock_no} K 線圖 (共 {len(df)} 日)",
+        style=s,
+        savefig=filepath,
+        fontproperties=prop
+    )
+
+# 公開變數
+__all__ = [
+    'IMAGE_HOST_URL',
+    'generate_kline_image',
+    'generate_kline_image_by_date',
+    'get_stock_info',
+    'get_realtime_price'
+]
