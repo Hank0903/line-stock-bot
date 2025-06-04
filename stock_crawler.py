@@ -2,7 +2,7 @@ import requests
 import datetime
 import os
 import pandas as pd
-import stock_crawler_plotter as plotter
+import plotter
 from utils import get_recent_trading_days, get_trading_days_between, date_to_query_format
 
 # 設定圖片輸出資料夾與網址
