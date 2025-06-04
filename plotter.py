@@ -6,6 +6,8 @@ import os
 
 def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str, show_sma=False):
     # ✅ 設定中文字體（Render 與本機皆通用）
+    print("🧾 字體檢查：", os.path.exists("static/fonts/NotoSansTC-Regular.ttf"))
+
     font_path = 'static/fonts/NotoSansTC-Regular.ttf'
     if os.path.exists(font_path):
         prop = font_manager.FontProperties(fname=font_path)
