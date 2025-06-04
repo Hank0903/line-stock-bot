@@ -2,9 +2,7 @@ import requests
 import datetime
 import os
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
-import mplfinance as mpf
+from plotter import plot_kline
 from utils import get_recent_trading_days, get_trading_days_between, date_to_query_format
 
 # 設定圖片輸出資料夾與網址（你需要將這資料夾掛上 CDN 或 imgur 上傳）
@@ -14,9 +12,6 @@ IMAGE_HOST_URL = 'https://line-stock-bot-iwcn.onrender.com/static'
 # 確保資料夾存在
 os.makedirs(IMAGE_OUTPUT_FOLDER, exist_ok=True)
 
-# 設定中文字體
-font_path = 'static/fonts/NotoSansTC-Regular.ttf'
-prop = fm.FontProperties(fname=font_path)
 
 # ✅ 爬取日資料
 def get_stock_data(stock_no: str, days: int = 30):
@@ -55,7 +50,7 @@ def fetch_stock_data(stock_no: str, dates):
                     "成交量": float(row[1].replace(',', '')),
                 })
         except Exception as e:
-            print(f"錯誤: {e}")
+            print(f"[❌ 錯誤] 下載 {stock_no} @ {date_param} 時失敗：{e}")
             continue
     df = pd.DataFrame(data)
     df = df.sort_values("日期")
@@ -95,7 +90,7 @@ def get_stock_info(stock_no: str):
         return "取得資料失敗"
 
 # ✅ K 線圖產生（依天數）
-def generate_kline_image(stock_no: str, days: int = 30, show_sma=False):
+def generate_kline_image(stock_no: str, days: int = 30):
     df = get_stock_data(stock_no, days)
     if df.empty:
         raise Exception("無法取得資料")
@@ -105,7 +100,7 @@ def generate_kline_image(stock_no: str, days: int = 30, show_sma=False):
     return filename
 
 # ✅ K 線圖產生（指定區間）
-def generate_kline_image_by_date(stock_no: str, start: str, end: str, show_sma=False):
+def generate_kline_image_by_date(stock_no: str, start: str, end: str):
     df = get_stock_data_by_date(stock_no, start, end)
     if df.empty:
         raise Exception("無法取得資料")
@@ -133,9 +128,9 @@ def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str):
         volume=True,
         title=f"{stock_no} K 線圖 (共 {len(df)} 日)",
         style=s,
-        savefig=filepath,
-        fontproperties=prop
+        savefig=filepath
     )
+
 
 # 公開變數
 __all__ = [
