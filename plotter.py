@@ -2,10 +2,13 @@ import mplfinance as mpf
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
+import os
 
 def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str, show_sma=False):
-    # 設定中文字體（Render 環境請確保字體存在於該路徑）
+    # ✅ 設定中文字體（Render 與本機皆通用）
     font_path = 'static/fonts/NotoSansTC-Regular.ttf'
+    if not os.path.exists(font_path):
+        print("⚠️ 找不到中文字體，請確認字體路徑正確！")
     prop = font_manager.FontProperties(fname=font_path)
     plt.rcParams['font.family'] = prop.get_name()
 
@@ -20,11 +23,9 @@ def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str, show_sma=False):
         '成交量': 'Volume'
     }, inplace=True)
 
-    # 設定顏色與樣式
     mc = mpf.make_marketcolors(up='red', down='green', edge='inherit', wick='inherit', volume='inherit')
     s = mpf.make_mpf_style(base_mpf_style='charles', marketcolors=mc)
 
-    # 畫圖並回傳圖表（避免太擠）
     fig, axlist = mpf.plot(
         df,
         type='candle',
@@ -32,14 +33,13 @@ def plot_kline(df: pd.DataFrame, stock_no: str, filepath: str, show_sma=False):
         volume=True,
         style=s,
         title=f"{stock_no} K 線圖（共 {len(df)} 日）",
-        figratio=(18, 5),        # 圖片比例拉寬
-        figscale=2.2,            # 整體放大
-        datetime_format='%m-%d', # 簡潔日期
+        figratio=(18, 5),
+        figscale=2.2,
+        datetime_format='%m-%d',
         xrotation=20,
         tight_layout=True,
         returnfig=True
     )
 
-    # 儲存圖片
     fig.savefig(filepath, dpi=100, bbox_inches='tight')
-    plt.close(fig)  # 釋放記憶體
+    plt.close(fig)
